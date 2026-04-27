@@ -7,7 +7,7 @@ import numpy as np
 with gzip.open('walmart_model_compressed.pkl', 'rb') as f:
     model = pickle.load(f)
 
-# Load scaler (scaler is small, no compression needed)
+# Load scaler
 scaler = pickle.load(open('walmart_scaler.pkl', 'rb'))
 
 st.set_page_config(page_title="Walmart Sales Forecaster", page_icon="🛒")
@@ -38,9 +38,9 @@ if st.button("Predict Weekly Sales 🚀"):
 
     st.success(f"💰 Predicted Weekly Sales: ${prediction:,.2f}")
 
-   if prediction > 1200000:
-    st.info("📈 High sales week expected — prepare for higher customer footfall")
-elif prediction > 700000:
-    st.info("📊 Average sales week expected — normal operations recommended")
-else:
-    st.warning("📉 Lower sales week expected — consider running promotions to boost sales")
+    if prediction > 1200000:
+        st.info("📈 High sales week expected — prepare for higher customer footfall")
+    elif prediction > 700000:
+        st.info("📊 Average sales week expected — normal operations recommended")
+    else:
+        st.warning("📉 Lower sales week expected — consider running promotions to boost sales")
