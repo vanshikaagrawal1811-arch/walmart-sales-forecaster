@@ -31,7 +31,7 @@ The predictions help identify high, average and low sales weeks to guide busines
 - **Version Control:** GitHub
 
 ## 📸 App Screenshot
-![App Screenshot](screenshot .png)
+![App Screenshot](screenshot.png)
 
 ## 📈 Key Findings
 - Random Forest achieved 96% R2 score
