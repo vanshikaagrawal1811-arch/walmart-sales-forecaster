@@ -38,9 +38,9 @@ if st.button("Predict Weekly Sales 🚀"):
 
     st.success(f"💰 Predicted Weekly Sales: ${prediction:,.2f}")
 
-    if prediction > 25000:
-        st.info("📈 High sales week — consider stocking up inventory!")
-    elif prediction > 15000:
-        st.info("📊 Average sales week — maintain current inventory")
-    else:
-        st.warning("📉 Low sales week — reduce new stock orders")
+   if prediction > 1200000:
+    st.info("📈 High sales week expected — prepare for higher customer footfall")
+elif prediction > 700000:
+    st.info("📊 Average sales week expected — normal operations recommended")
+else:
+    st.warning("📉 Lower sales week expected — consider running promotions to boost sales")
