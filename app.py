@@ -91,19 +91,31 @@ if st.button("Predict Weekly Sales 🚀"):
 
     shap_values = explainer.shap_values(input_df)
 
-    fig, ax = plt.subplots(figsize=(8, 4))
+   fig, ax = plt.subplots(figsize=(12, 6))
     shap.plots.waterfall(
-        shap.Explanation(
-            values=shap_values[0],
-            base_values=explainer.expected_value,
-            data=input_df.iloc[0].values,
-            feature_names=input_df.columns.tolist()
-        ),
-        show=False
-    )
-    st.pyplot(fig)
-    plt.clf()
+     shap.Explanation(
+        values=shap_values[0],
+        base_values=explainer.expected_value,
+        data=input_df.iloc[0].values,
+        feature_names=[
+            f"Store={store}", f"Holiday={'Yes' if holiday else 'No'}",
+            f"Temp={temperature}°F", f"Fuel=${fuel_price}",
+            f"CPI={cpi}", f"Unemp={unemployment}%",
+            f"Year={year}", f"Month={month}",
+            f"Week={week}", f"Day={day}"
+        ]
+     ),
+    max_display=10,
+    show=False
+  )
 
+plt.title("Why this prediction?", fontsize=13, pad=15)
+plt.xlabel("Sales Impact ($)", fontsize=11)
+plt.xticks(fontsize=9)
+plt.yticks(fontsize=10)
+plt.tight_layout(pad=2.0)
+st.pyplot(fig, use_container_width=True)
+plt.clf()
     # ── Holiday comparison
     st.markdown("---")
     st.subheader("🗓️ Holiday Impact for This Store")
