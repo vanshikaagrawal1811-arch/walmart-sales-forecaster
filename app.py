@@ -189,15 +189,6 @@ elif page == "📊 Insights Dashboard":
         "Weather and fuel price have minimal impact — "
         "discount them in planning models."
     )
-
-    st.markdown("---")
-    st.subheader("💡 Recommendation")
-    st.write("""
-        Deploy this model to automate weekly inventory orders per store,
-        targeting a **15-20% reduction in overstock** and a **10% reduction
-        in stockouts** during holiday weeks.
-    """)
-
     st.markdown("---")
     st.subheader("🤖 Model Performance")
 
