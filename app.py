@@ -45,7 +45,7 @@ week         = st.sidebar.selectbox("Week of Year", range(1, 53))
 day          = st.sidebar.slider("Day of Month", 1, 31, 15)
 
 # ============================================================
-# PAGE 1 — PREDICTOR
+# MAIN PAGE
 # ============================================================
 st.title("🛒 Walmart Weekly Sales Forecaster")
 st.write("Predict weekly sales for any Walmart store based on key factors.")
@@ -67,14 +67,14 @@ if st.button("Predict Weekly Sales 🚀"):
 
     prediction = model.predict(input_df)[0]
 
-    # Prediction metrics
+    # ── Prediction metrics
     st.markdown("---")
     col1, col2, col3 = st.columns(3)
     col1.metric("Predicted Weekly Sales", f"${prediction:,.2f}")
     col2.metric("Store",                  f"#{store}")
     col3.metric("Holiday Week",           "Yes" if holiday else "No")
 
-    # Sales level message
+    # ── Sales level message
     if prediction > 1_200_000:
         st.success("📈 High sales week — prepare for higher customer footfall.")
     elif prediction > 700_000:
@@ -82,46 +82,60 @@ if st.button("Predict Weekly Sales 🚀"):
     else:
         st.warning("📉 Lower sales week — consider running promotions.")
 
-    # SHAP Waterfall
+    # ── SHAP bar chart
     st.markdown("---")
-    st.subheader("🔍 Why this prediction? (SHAP Explanation)")
-    st.caption("Each bar shows how much that feature pushed the prediction up or down from the baseline.")
+    st.subheader("🔍 Why this prediction?")
+    st.caption("Positive values pushed sales up, negative values pushed sales down.")
 
     shap_values = explainer.shap_values(input_df)
 
-    fig, ax = plt.subplots(figsize=(12, 6))
-    shap.plots.waterfall(
-        shap.Explanation(
-            values=shap_values[0],
-            base_values=explainer.expected_value,
-            data=input_df.iloc[0].values,
-            feature_names=[
-                f"Store={store}", f"Holiday={'Yes' if holiday else 'No'}",
-                f"Temp={temperature}°F", f"Fuel=${fuel_price}",
-                f"CPI={cpi}", f"Unemp={unemployment}%",
-                f"Year={year}", f"Month={month}",
-                f"Week={week}", f"Day={day}"
-            ]
-        ),
-        max_display=10,
-        show=False
-    )
-    plt.title("Why this prediction?", fontsize=13, pad=15)
-    plt.xlabel("Sales Impact ($)", fontsize=11)
-    plt.xticks(fontsize=9)
-    plt.yticks(fontsize=10)
-    plt.tight_layout(pad=2.0)
+    shap_df = pd.DataFrame({
+        'Feature': [
+            f"Store #{store}",
+            f"Holiday {'Yes' if holiday else 'No'}",
+            f"Temperature {temperature}°F",
+            f"Fuel Price ${fuel_price}",
+            f"CPI {cpi}",
+            f"Unemployment {unemployment}%",
+            f"Year {year}",
+            f"Month {month}",
+            f"Week {week}",
+            f"Day {day}"
+        ],
+        'Impact': shap_values[0]
+    }).sort_values('Impact')
+
+    colors = ['#E8413B' if x > 0 else '#4C9BE8' for x in shap_df['Impact']]
+
+    fig, ax = plt.subplots(figsize=(10, 5))
+    bars = ax.barh(shap_df['Feature'], shap_df['Impact'], color=colors)
+
+    ax.axvline(x=0, color='black', linewidth=0.8)
+    ax.set_xlabel("Impact on Predicted Sales ($)", fontsize=11)
+    ax.set_title("Feature Impact on This Prediction", fontsize=13, pad=12)
+    ax.tick_params(axis='y', labelsize=11)
+    ax.tick_params(axis='x', labelsize=9)
+
+    for bar, val in zip(bars, shap_df['Impact']):
+        ax.text(
+            val + (max(shap_df['Impact']) * 0.01),
+            bar.get_y() + bar.get_height() / 2,
+            f"${val:+,.0f}",
+            va='center', fontsize=9
+        )
+
+    plt.tight_layout()
     st.pyplot(fig, use_container_width=True)
     plt.clf()
 
-    # Holiday comparison
+    # ── Holiday comparison
     st.markdown("---")
     st.subheader("🗓️ Holiday Impact for This Store")
 
-    input_regular                  = input_df.copy()
-    input_regular['Holiday_Flag']  = 0
-    input_holiday                  = input_df.copy()
-    input_holiday['Holiday_Flag']  = 1
+    input_regular                 = input_df.copy()
+    input_regular['Holiday_Flag'] = 0
+    input_holiday                 = input_df.copy()
+    input_holiday['Holiday_Flag'] = 1
 
     regular_pred = model.predict(input_regular)[0]
     holiday_pred = model.predict(input_holiday)[0]
