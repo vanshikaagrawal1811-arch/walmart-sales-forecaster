@@ -24,7 +24,14 @@ def load_model():
         model = pickle.load(f)
     return model
 
+@st.cache_resource
+def load_insights():
+    with open('walmart_insights.pkl', 'rb') as f:
+        insights = pickle.load(f)
+    return insights
+
 model     = load_model()
+insights  = load_insights()
 explainer = shap.TreeExplainer(model)
 
 # ============================================================
@@ -48,13 +55,19 @@ if page == "🚀 Predictor":
     fuel_price   = st.sidebar.slider("Fuel Price ($)", 2.0, 5.0, 3.5)
     cpi          = st.sidebar.slider("CPI", 120.0, 230.0, 180.0)
     unemployment = st.sidebar.slider("Unemployment (%)", 3.0, 15.0, 7.0)
-    year         = st.sidebar.selectbox("Year", [2010, 2011, 2012])
-    month        = st.sidebar.selectbox("Month", range(1, 13))
-    week         = st.sidebar.selectbox("Week of Year", range(1, 53))
-    day          = st.sidebar.slider("Day of Month", 1, 31, 15)
+
+    # ── Year fixed to 2013 — first year model hasn't seen
+    st.sidebar.markdown("📅 **Forecast Year: 2013**")
+    st.sidebar.caption("Model trained on 2010–2012. 2013 is the intended prediction year.")
+    year = 2013
+
+    month = st.sidebar.selectbox("Month", range(1, 13))
+    week  = st.sidebar.selectbox("Week of Year", range(1, 53))
+    day   = st.sidebar.slider("Day of Month", 1, 31, 15)
 
     st.title("🛒 Walmart Weekly Sales Forecaster")
-    st.write("Predict weekly sales for any Walmart store based on key factors.")
+    st.write("Predict weekly sales for any Walmart store for 2013 based on key factors.")
+    st.caption("⚠️ Model trained on 2010–2012 data. Predictions are for 2013 — the first year the model has not seen.")
 
     if st.button("Predict Weekly Sales 🚀"):
 
@@ -158,43 +171,54 @@ if page == "🚀 Predictor":
 elif page == "📊 Insights Dashboard":
 
     st.title("📊 Walmart Sales — Key Insights")
-    st.write("Pre-computed findings from the training data analysis.")
+    st.write("Findings computed directly from training data analysis.")
 
     st.markdown("---")
 
-    # ── Metric cards
+    # ── Dynamic metric cards loaded from saved insights
     col1, col2, col3 = st.columns(3)
-    col1.metric("Top Performing Store", "#20 — $2,107,677/week")
-    col2.metric("Holiday Sales Boost",  "+7.8%")
-    col3.metric("Peak Sales Month",     "December (Month 12)")
+    col1.metric("Top Performing Store",
+                f"#{insights['best_store']} — ${insights['best_store_avg']:,.0f}/week")
+    col2.metric("Holiday Sales Boost",
+                f"+{insights['holiday_lift']}%")
+    col3.metric("Peak Sales Month",
+                f"Month {insights['peak_month']}")
 
     st.markdown("---")
     st.subheader("📋 Key Findings")
 
     st.success(
-        "🏆 **Store #20** is the top performer at $2,107,677/week avg. "
-        "Store #33 is the lowest — worth investigating for operational issues."
+        f"🏆 **Store #{insights['best_store']}** is the top performer at "
+        f"${insights['best_store_avg']:,.0f}/week avg. "
+        f"Store #{insights['worst_store']} is the lowest — worth investigating for operational issues."
     )
     st.info(
-        "🗓️ **Holiday weeks** drive 7.8% higher sales on average. "
-        "Stores should increase inventory 2 weeks before holiday periods "
-        "to avoid stockouts."
+        f"🗓️ **Holiday weeks** drive {insights['holiday_lift']}% higher sales on average. "
+        "Stores should increase inventory 2 weeks before holiday periods to avoid stockouts."
     )
     st.info(
-        "📅 **Month 12** is the peak sales period. Staffing and logistics "
+        f"📅 **Month {insights['peak_month']}** is the peak sales period. Staffing and logistics "
         "planning should prioritize this window."
     )
     st.warning(
-        "📊 **Top sales drivers: Store, Unemployment, CPI.** "
-        "Weather and fuel price have minimal impact — "
-        "discount them in planning models."
+        f"📊 **Top sales drivers: {', '.join(insights['top_features'])}.**"
+        " Weather and fuel price have minimal impact — discount them in planning models."
     )
+
+    st.markdown("---")
+    st.subheader("💡 Recommendation")
+    st.write("""
+        Deploy this model to automate weekly inventory orders per store,
+        targeting a **15-20% reduction in overstock** and a **10% reduction
+        in stockouts** during holiday weeks.
+    """)
+
     st.markdown("---")
     st.subheader("🤖 Model Performance")
 
     perf_df = pd.DataFrame({
-        'Model':  ['Linear Regression', 'Decision Tree',
-                   'Random Forest',     'XGBoost'],
+        'Model':    ['Linear Regression', 'Decision Tree',
+                     'Random Forest',     'XGBoost'],
         'R2 Score': [0.08, 0.91, 0.95, 0.97],
         'MAE ($)':  [211543, 54231, 38421, 29843],
     })
