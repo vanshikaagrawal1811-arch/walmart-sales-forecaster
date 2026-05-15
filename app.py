@@ -24,11 +24,16 @@ def load_model():
         model = pickle.load(f)
     return model
 
-@st.cache_resource
 def load_insights():
-    with open('walmart_insights.pkl', 'rb') as f:
-        insights = pickle.load(f)
-    return insights
+    return {
+        'best_store':     20,
+        'best_store_avg': 2107677,
+        'worst_store':    33,
+        'holiday_lift':   7.8,
+        'peak_month':     12,
+        'top_features':   ['Store', 'Unemployment', 'CPI'],
+        'model_r2':       97.0,
+    }
 
 model     = load_model()
 insights  = load_insights()
